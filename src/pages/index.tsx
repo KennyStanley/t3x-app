@@ -1,15 +1,22 @@
 import type { NextPage } from 'next'
 import Head from 'next/head'
+import { useMachine } from '@xstate/react'
+import { Zap, ZapOff } from 'react-feather'
+import { toggleMachine } from '../machines/toggleMachine'
 import { trpc } from '../utils/trpc'
 
-type TechnologyCardProps = {
-  name: string
-  description: string
-  documentation: string
-}
+// import { inspect } from '@xstate/inspect'
+// if (typeof window !== 'undefined') {
+//   inspect({
+//     url: 'https://stately.ai/viz?inspect',
+//     iframe: false,
+//   })
+// }
 
 const Home: NextPage = () => {
   const hello = trpc.useQuery(['example.hello', { text: 'from tRPC' }])
+
+  const [state, send] = useMachine(toggleMachine, { devTools: false })
 
   return (
     <>
@@ -20,58 +27,35 @@ const Home: NextPage = () => {
       </Head>
 
       <main className="container mx-auto flex flex-col items-center justify-center h-screen p-4">
-        <h1 className="text-5xl md:text-[5rem] leading-normal font-extrabold text-gray-700">
-          Create <span className="text-purple-300">T3</span> App
-        </h1>
-        <p className="text-2xl text-gray-700">This stack uses:</p>
-        <div className="grid gap-3 pt-3 mt-3 text-center md:grid-cols-2 lg:w-2/3">
-          <TechnologyCard
-            name="NextJS"
-            description="The React framework for production"
-            documentation="https://nextjs.org/"
-          />
-          <TechnologyCard
-            name="TypeScript"
-            description="Strongly typed programming language that builds on JavaScript, giving you better tooling at any scale"
-            documentation="https://www.typescriptlang.org/"
-          />
-          <TechnologyCard
-            name="TailwindCSS"
-            description="Rapidly build modern websites without ever leaving your HTML"
-            documentation="https://tailwindcss.com/"
-          />
-          <TechnologyCard
-            name="tRPC"
-            description="End-to-end typesafe APIs made easy"
-            documentation="https://trpc.io/"
-          />
+        <div id="icon" className="relative">
+          <div
+            className={`absolute -inset-1 rounded-full transition-all duration-300 blur-xl ${
+              state.matches('on') && 'bg-amber-600'
+            }`}
+          ></div>
+          <div className="relative">
+            {state.matches('on') && <Zap size={150} />}
+            {state.matches('off') && <ZapOff size={150} />}
+          </div>
         </div>
-        <div className="pt-6 text-2xl text-blue-500 flex justify-center items-center w-full">
+        <span id="spacer" className="my-2" />
+        <h1 className="text-3xl font-bold">{state.value as string}</h1>
+        <span id="spacer" className="my-6" />
+        <button
+          onClick={() => send('TOGGLE')}
+          className="bg-gray-600 hover:bg-gray-500 active:bg-gray-400 rounded-xl px-4 py-2 transition-all duration-300 hover:shadow-2xl"
+        >
+          Toggle State
+        </button>
+        <span id="spacer" className="my-8" />
+        <h1 className="text-5xl md:text-[5rem] leading-normal font-extrabold text-gray-200">
+          <span className="text-purple-400">T3X</span> App
+        </h1>
+        <div className="text-2xl text-blue-400 flex justify-center items-center w-full">
           {hello.data ? <p>{hello.data.greeting}</p> : <p>Loading..</p>}
         </div>
       </main>
     </>
-  )
-}
-
-const TechnologyCard = ({
-  name,
-  description,
-  documentation,
-}: TechnologyCardProps) => {
-  return (
-    <section className="flex flex-col justify-center p-6 duration-500 border-2 border-gray-500 rounded shadow-xl motion-safe:hover:scale-105">
-      <h2 className="text-lg text-gray-700">{name}</h2>
-      <p className="text-sm text-gray-600">{description}</p>
-      <a
-        className="mt-3 text-sm underline text-violet-500 decoration-dotted underline-offset-2"
-        href={documentation}
-        target="_blank"
-        rel="noreferrer"
-      >
-        Documentation
-      </a>
-    </section>
   )
 }
 
