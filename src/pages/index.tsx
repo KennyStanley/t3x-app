@@ -51,12 +51,6 @@ const Home: NextPage = () => {
     }
   }, [machine.data, send])
 
-  // Inline variables & functions
-  const value = state.value as string
-  const count = state.context.data.count as number
-  const isOn = state.matches('on')
-  const toggle = () => send('TOGGLE')
-
   return (
     <>
       <Head>
@@ -69,18 +63,20 @@ const Home: NextPage = () => {
         <div id="icon" className="relative">
           <div
             className={`absolute -inset-1 rounded-full transition-all duration-300 blur-xl ${
-              isOn && 'bg-amber-600'
+              state.matches('on') && 'bg-amber-600'
             }`}
           ></div>
           <div className="relative">
-            {isOn ? <Zap size={150} /> : <ZapOff size={150} />}
+            {state.matches('on') ? <Zap size={150} /> : <ZapOff size={150} />}
           </div>
         </div>
         <span id="spacer" className="my-2" />
-        <h1 className="text-3xl font-bold">{value}</h1>
+        <h1 className="text-3xl font-bold">
+          {JSON.stringify(state.value).replaceAll('"', ' ')}
+        </h1>
         <span id="spacer" className="my-6" />
         <button
-          onClick={toggle}
+          onClick={() => send('TOGGLE')}
           className="bg-gray-600 hover:bg-gray-500 active:bg-gray-400 rounded-xl px-4 py-2 transition-all duration-300 hover:shadow-2xl"
         >
           Toggle State
