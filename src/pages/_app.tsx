@@ -12,9 +12,7 @@ const MyApp: AppType = ({
 }) => {
   return (
     <SessionProvider session={session}>
-      <div id="globalStyles" className="bg-gray-900 text-white">
-        <Component {...pageProps} />
-      </div>
+      <Component {...pageProps} />
     </SessionProvider>
   )
 }
