@@ -1,8 +1,9 @@
+import { useEffect } from 'react'
 import type { NextPage } from 'next'
 import Head from 'next/head'
 import { useMachine } from '@xstate/react'
 import { Zap, ZapOff } from 'react-feather'
-import { toggleMachine } from '../machines/toggleMachine'
+import { toggleMachine } from '../machines/ToggleMachine'
 import { trpc } from '../utils/trpc'
 
 // import { inspect } from '@xstate/inspect'
@@ -14,27 +15,47 @@ import { trpc } from '../utils/trpc'
 // }
 
 const Home: NextPage = () => {
-  const hello = trpc.useQuery(['example.hello', { text: 'from tRPC' }])
-
-  // const [state, send] = useMachine(toggleMachine, { devTools: false })
-
   const utils = trpc.useContext()
-  const serverState = trpc.useQuery(['machine.state'])
-  const sendToggle = trpc.useMutation(['machine.toggle'], {
+
+  const machine = trpc.useQuery(['machine.data'])
+  const machineToggle = trpc.useMutation(['machine.toggle'], {
     onSuccess() {
-      utils.invalidateQueries(['machine.state'])
+      utils.invalidateQueries(['machine.data'])
+    },
+  }).mutate
+
+  // Setup the machine
+  const [state, send] = useMachine(toggleMachine, {
+    devTools: false,
+    actions: {
+      toggle: () => machineToggle(),
     },
   })
 
-  // xstate values
-  // const value = state.value as string
-  // const isOn = state.matches('on')
-  // const toggle = () => send('TOGGLE')
+  // Runs first time the component is rendered to setup the machine
+  useEffect(() => {
+    if (utils.client && machine.data) {
+      send('SETUP', {
+        client: utils.client,
+        data: machine.data,
+      })
+    }
+  }, [utils.client, machine.data, send])
 
-  // tRPC values
-  const value = serverState.data
-  const isOn = serverState.data === 'on'
-  const toggle = () => sendToggle.mutate()
+  // Runs when the trpc data changes
+  useEffect(() => {
+    if (machine.data) {
+      send('UPDATE_DATA', {
+        data: machine.data,
+      })
+    }
+  }, [machine.data, send])
+
+  // Inline variables & functions
+  const value = state.value as string
+  const count = state.context.data.count as number
+  const isOn = state.matches('on')
+  const toggle = () => send('TOGGLE')
 
   return (
     <>
@@ -68,10 +89,15 @@ const Home: NextPage = () => {
         <h1 className="text-5xl md:text-[5rem] leading-normal font-extrabold text-gray-200">
           <span className="text-purple-400">T3X</span> App
         </h1>
-        <div className="text-2xl text-blue-400 flex justify-center items-center w-full">
-          {hello.data ? (
+        <span id="spacer" className="my-2" />
+        <div className="text-lg text-blue-400 flex justify-center items-center w-full">
+          {machine.data ? (
             <>
-              <p>{hello.data.greeting}</p>
+              <h2 className="text-2xl mr-4">From tRPC: </h2>
+              <div className="flex flex-col items-center border-2 rounded-xl p-2">
+                <p>state: {machine.data.state}</p>
+                <p>count: {machine.data.count}</p>
+              </div>
             </>
           ) : (
             <p>Loading..</p>

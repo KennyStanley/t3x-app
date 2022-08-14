@@ -2,16 +2,19 @@ import { createRouter } from './context'
 import { z } from 'zod'
 
 export const machineRouter = createRouter()
-  .query('state', {
+  .query('data', {
     async resolve({ ctx }) {
       try {
         const machine = await ctx.prisma.machine.findFirst({
           where: { name: 'toggle' },
-          select: { state: true },
+          select: { state: true, count: true },
         })
-        return machine?.state
+        return {
+          state: machine?.state,
+          count: machine?.count,
+        }
       } catch (error) {
-        console.error('error', error)
+        console.log('error', error)
       }
     },
   })
@@ -19,13 +22,16 @@ export const machineRouter = createRouter()
     async resolve({ ctx }) {
       try {
         const toggleMachine = await ctx.prisma.machine.findFirst({
-          select: { state: true },
+          select: { state: true, count: true },
           where: { name: 'toggle' },
         })
         if (!toggleMachine) return
         return await ctx.prisma.machine.updateMany({
           where: { name: 'toggle' },
-          data: { state: toggleMachine.state === 'on' ? 'off' : 'on' },
+          data: {
+            state: toggleMachine.state === 'on' ? 'off' : 'on',
+            count: toggleMachine.count + 1,
+          },
         })
       } catch (error) {
         console.error('error', error)
