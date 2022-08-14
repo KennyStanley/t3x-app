@@ -9,10 +9,7 @@ export const machineRouter = createRouter()
           where: { name: 'toggle' },
           select: { state: true, count: true },
         })
-        return {
-          state: machine?.state,
-          count: machine?.count,
-        }
+        return machine
       } catch (error) {
         console.log('error', error)
       }
