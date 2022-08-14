@@ -71,9 +71,7 @@ const Home: NextPage = () => {
           </div>
         </div>
         <span id="spacer" className="my-2" />
-        <h1 className="text-3xl font-bold">
-          {JSON.stringify(state.value).replaceAll('"', ' ')}
-        </h1>
+        <h1 className="text-3xl font-bold">{JSON.stringify(state.value)}</h1>
         <span id="spacer" className="my-6" />
         <button
           onClick={() => send('TOGGLE')}
