@@ -16,7 +16,25 @@ import { trpc } from '../utils/trpc'
 const Home: NextPage = () => {
   const hello = trpc.useQuery(['example.hello', { text: 'from tRPC' }])
 
-  const [state, send] = useMachine(toggleMachine, { devTools: false })
+  // const [state, send] = useMachine(toggleMachine, { devTools: false })
+
+  const utils = trpc.useContext()
+  const serverState = trpc.useQuery(['machine.state'])
+  const sendToggle = trpc.useMutation(['machine.toggle'], {
+    onSuccess() {
+      utils.invalidateQueries(['machine.state'])
+    },
+  })
+
+  // xstate values
+  // const value = state.value as string
+  // const isOn = state.matches('on')
+  // const toggle = () => send('TOGGLE')
+
+  // tRPC values
+  const value = serverState.data
+  const isOn = serverState.data === 'on'
+  const toggle = () => sendToggle.mutate()
 
   return (
     <>
@@ -30,19 +48,18 @@ const Home: NextPage = () => {
         <div id="icon" className="relative">
           <div
             className={`absolute -inset-1 rounded-full transition-all duration-300 blur-xl ${
-              state.matches('on') && 'bg-amber-600'
+              isOn && 'bg-amber-600'
             }`}
           ></div>
           <div className="relative">
-            {state.matches('on') && <Zap size={150} />}
-            {state.matches('off') && <ZapOff size={150} />}
+            {isOn ? <Zap size={150} /> : <ZapOff size={150} />}
           </div>
         </div>
         <span id="spacer" className="my-2" />
-        <h1 className="text-3xl font-bold">{state.value as string}</h1>
+        <h1 className="text-3xl font-bold">{value}</h1>
         <span id="spacer" className="my-6" />
         <button
-          onClick={() => send('TOGGLE')}
+          onClick={toggle}
           className="bg-gray-600 hover:bg-gray-500 active:bg-gray-400 rounded-xl px-4 py-2 transition-all duration-300 hover:shadow-2xl"
         >
           Toggle State
@@ -52,7 +69,13 @@ const Home: NextPage = () => {
           <span className="text-purple-400">T3X</span> App
         </h1>
         <div className="text-2xl text-blue-400 flex justify-center items-center w-full">
-          {hello.data ? <p>{hello.data.greeting}</p> : <p>Loading..</p>}
+          {hello.data ? (
+            <>
+              <p>{hello.data.greeting}</p>
+            </>
+          ) : (
+            <p>Loading..</p>
+          )}
         </div>
       </main>
     </>
